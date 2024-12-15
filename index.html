@@ -203,6 +203,7 @@
           <option value="episode">Episode</option>
         </select>
         <input type="text" id="mediaName" placeholder="Enter media name" />
+        <input type="text" id="imdbId" placeholder="Optional IMDb ID (if known)" />
         <input type="number" id="seasonNumber" placeholder="Season number (for episodes)" style="display: none;" />
         <input type="number" id="episodeNumber" placeholder="Episode number (for episodes)" style="display: none;" />
         <button onclick="embedMedia()">Search & Watch</button>
@@ -215,6 +216,20 @@
     </div>
 
     <script>
+      // Global list of streaming proxies
+      const STREAMING_PROXIES = [
+        'https://vidsrc.xyz',
+        'https://vidsrc.me',
+        'https://multiembed.mov'
+      ];
+
+      // Global list of CORS proxies
+      const CORS_PROXIES = [
+        'https://cors-anywhere.herokuapp.com/',
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?'
+      ];
+
       // Show/hide fields based on media type
       document.getElementById("mediaType").addEventListener("change", function () {
         const mediaType = this.value;
@@ -230,16 +245,46 @@
         }
       });
 
+      // Function to try multiple CORS proxies
+      async function fetchWithFallback(urls, options = {}) {
+        for (const proxyUrl of CORS_PROXIES) {
+          try {
+            const response = await fetch(proxyUrl + urls[0], options);
+            return await response.text();
+          } catch (error) {
+            console.warn(`Proxy ${proxyUrl} failed:`, error);
+            continue;
+          }
+        }
+        throw new Error('All CORS proxies failed');
+      }
+
+      // Function to search IMDb ID
+      async function searchIMDbId(mediaName) {
+        const searchUrl = `https://www.imdb.com/find?q=${encodeURIComponent(mediaName)}&s=tt`;
+        
+        try {
+          const text = await fetchWithFallback([searchUrl]);
+          const imdbIdMatch = text.match(/\/title\/(tt\d+)/);
+          return imdbIdMatch ? imdbIdMatch[1] : null;
+        } catch (error) {
+          console.error("IMDb search failed:", error);
+          return null;
+        }
+      }
+
+      // Main function to embed media
       async function embedMedia() {
         const mediaType = document.getElementById("mediaType").value;
         const mediaName = document.getElementById("mediaName").value.trim();
+        const manualImdbId = document.getElementById("imdbId").value.trim();
         const seasonNumber = document.getElementById("seasonNumber").value.trim();
         const episodeNumber = document.getElementById("episodeNumber").value.trim();
         const loadingIndicator = document.getElementById("loadingIndicator");
         const iframeContainer = document.getElementById("iframeContainer");
 
-        if (!mediaName) {
-          alert("Please enter a media name!");
+        if (!mediaName && !manualImdbId) {
+          alert("Please enter a media name or IMDb ID!");
           return;
         }
 
@@ -247,38 +292,53 @@
         loadingIndicator.style.display = "flex";
         iframeContainer.innerHTML = ""; // Clear previous content
 
-        const proxy = "https://cors-anywhere.herokuapp.com/";
-        const searchUrl = `${proxy}https://www.imdb.com/find?q=${encodeURIComponent(mediaName)}&s=tt`;
-
         try {
-          // Fetch IMDb search results
-          const response = await fetch(searchUrl);
-          const text = await response.text();
-          console.log(text);
-
-          // Extract the IMDb ID from the first search result
-          const imdbIdMatch = text.match(/\/title\/(tt\d+)/);
-          if (!imdbIdMatch) {
-            alert("Media not found!");
-            loadingIndicator.style.display = "none";
-            return;
-          }
-          const imdbId = imdbIdMatch[1];
-
-          let embedUrl = "";
-
-          // Construct the embed URL based on media type
-          if (mediaType === "movie") {
-            embedUrl = `https://vidsrc.xyz/embed/movie/${imdbId}`;
-          } else if (mediaType === "tv") {
-            embedUrl = `https://vidsrc.xyz/embed/tv/${imdbId}`;
-          } else if (mediaType === "episode") {
-            if (!seasonNumber || !episodeNumber) {
-              alert("Please enter both season and episode numbers!");
+          // Determine IMDb ID
+          let imdbId = manualImdbId;
+          if (!imdbId) {
+            imdbId = await searchIMDbId(mediaName);
+            if (!imdbId) {
+              alert("Could not find media. Try entering the IMDb ID manually.");
               loadingIndicator.style.display = "none";
               return;
             }
-            embedUrl = `https://vidsrc.xyz/embed/tv/${imdbId}/${seasonNumber}-${episodeNumber}`;
+          }
+
+          // Try different streaming proxies
+          let embedUrl = "";
+          let success = false;
+
+          for (const proxy of STREAMING_PROXIES) {
+            if (mediaType === "movie") {
+              embedUrl = `${proxy}/embed/movie/${imdbId}`;
+            } else if (mediaType === "tv") {
+              embedUrl = `${proxy}/embed/tv/${imdbId}`;
+            } else if (mediaType === "episode") {
+              if (!seasonNumber || !episodeNumber) {
+                alert("Please enter both season and episode numbers!");
+                loadingIndicator.style.display = "none";
+                return;
+              }
+              embedUrl = `${proxy}/embed/tv/${imdbId}/${seasonNumber}-${episodeNumber}`;
+            }
+
+            // Test the embed URL
+            try {
+              const testResponse = await fetch(embedUrl);
+              if (testResponse.ok) {
+                success = true;
+                break;
+              }
+            } catch (error) {
+              console.warn(`Proxy ${proxy} failed:`, error);
+              continue;
+            }
+          }
+
+          if (!success) {
+            alert("No working streaming sources found. Try a different media or IMDb ID.");
+            loadingIndicator.style.display = "none";
+            return;
           }
 
           // Create and embed the iframe
@@ -295,7 +355,7 @@
 
         } catch (error) {
           console.error("Error fetching media data:", error);
-          alert("Failed to retrieve media information.");
+          alert("Failed to retrieve media information. Check your input and try again.");
           loadingIndicator.style.display = "none";
         }
       }
