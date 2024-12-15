@@ -1,280 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <title>HD Media Explorer</title>
     <style>
-      :root {
-        --bg-gradient-1: #ff9a9e;
-        --bg-gradient-2: #fad0c4;
-        --bg-gradient-3: #fbc2eb;
-        --bg-gradient-4: #a1c4fd;
-        --bg-gradient-5: #c2e9fb;
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --text-color: #333;
-      }
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --text-color: #333;
+        }
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        transition: all 0.3s ease;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      body {
-        font-family: 'Arial', sans-serif;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background: linear-gradient(45deg, 
-          var(--bg-gradient-1), 
-          var(--bg-gradient-2), 
-          var(--bg-gradient-3), 
-          var(--bg-gradient-4), 
-          var(--bg-gradient-5)
-        );
-        background-size: 400% 400%;
-        animation: hueShift 20s ease infinite;
-        position: relative;
-        overflow-x: hidden;
-      }
+        body {
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fbc2eb, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: hueShift 20s ease infinite;
+        }
 
-      body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: inherit;
-        z-index: -1;
-        filter: brightness(1.1);
-        opacity: 0.7;
-        animation: hueShift 20s ease infinite;
-      }
+        @keyframes hueShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
 
-      @keyframes hueShift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-
-      @keyframes loadingTextScale {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.1); opacity: 0.8; }
-      }
-
-      .container {
-        width: 90%;
-        max-width: 1200px;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 15px;
-        padding: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        margin-top: 50px;
-        animation: fadeIn 0.8s ease;
-      }
-
-      h1 {
-        text-align: center;
-        color: var(--primary-color);
-        margin-bottom: 30px;
-        font-size: 2.5em;
-        letter-spacing: -1px;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-      }
-
-      #searchContainer {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
-      input, select {
-        width: 100%;
-        max-width: 400px;
-        padding: 12px 15px;
-        border: 2px solid rgba(0, 123, 255, 0.2);
-        border-radius: 8px;
-        font-size: 1em;
-        outline: none;
-        transition: all 0.3s ease;
-      }
-
-      input:focus, select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 10px rgba(0, 123, 255, 0.1);
-      }
-
-      button {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        border-radius: 8px;
-        font-size: 1em;
-        cursor: pointer;
-        transform: translateY(0);
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      button:hover {
-        background-color: #0056b3;
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      }
-
-      #loadingIndicator {
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-top: 20px;
-      }
-
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid rgba(0, 123, 255, 0.2);
-        border-top: 5px solid var(--primary-color);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 15px;
-      }
-
-      .loading-text {
-        color: var(--primary-color);
-        font-weight: bold;
-        animation: loadingTextScale 1.5s ease-in-out infinite;
-      }
-
-      #iframeContainer {
-        width: 100%;
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-      }
-
-      iframe {
-        width: 100%;
-        max-width: 1100px;
-        height: 600px;
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        animation: fadeIn 0.8s ease;
-      }
-
-      @media (max-width: 768px) {
         .container {
-          width: 95%;
-          padding: 20px;
+            width: 90%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
-        iframe {
-          height: 400px;
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 2.5em;
         }
-      }
+
+        #searchContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 2px solid rgba(0, 123, 255, 0.2);
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.1);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #loadingIndicator {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 123, 255, 0.2);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--primary-color);
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+            animation: loadingTextScale 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loadingTextScale {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        #iframeContainer iframe {
+            width: 100%;
+            max-width: 1100px;
+            height: 600px;
+            border: none;
+            border-radius: 15px;
+        }
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>HD Media Explorer</h1>
-      <div id="searchContainer">
+</head>
+
+<body>
+<div class="container">
+    <h1>HD Media Explorer</h1>
+    <div id="searchContainer">
         <select id="mediaType">
-          <option value="movie">Movie</option>
-          <option value="tv">TV Show</option>
-          <option value="episode">Episode</option>
+            <option value="movie">Movie</option>
+            <option value="tv">TV Show</option>
+            <option value="episode">Episode</option>
         </select>
         <input type="text" id="mediaName" placeholder="Enter media name" />
         <input type="text" id="imdbId" placeholder="Optional IMDb ID (if known)" />
-        <input type="number" id="seasonNumber" placeholder="Season number (for episodes)" style="display: none;" />
-        <input type="number" id="episodeNumber" placeholder="Episode number (for episodes)" style="display: none;" />
+        <input type="number" id="seasonNumber" placeholder="Season number" style="display: none;" />
+        <input type="number" id="episodeNumber" placeholder="Episode number" style="display: none;" />
         <button onclick="embedMedia()">Search & Watch</button>
-      </div>
-      <div id="loadingIndicator">
-        <div class="spinner"></div>
-        <div class="loading-text">Loading...</div>
-      </div>
-      <div id="iframeContainer"></div>
     </div>
 
-    <script>
-      // Global list of streaming proxies
-      const STREAMING_PROXIES = [
+    <div id="loadingIndicator">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <div id="iframeContainer"></div>
+</div>
+
+<script>
+    const STREAMING_PROXIES = [
         'https://vidsrc.xyz',
         'https://vidsrc.me',
-        'https://multiembed.mov'
-      ];
+        'https://multiembed.mov',
+        'https://embedflix.xyz',
+        'https://movieflix.io'
+    ];
 
-      // Global list of CORS proxies
-      const CORS_PROXIES = [
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?'
-      ];
-
-      // Show/hide fields based on media type
-      document.getElementById("mediaType").addEventListener("change", function () {
+    document.getElementById("mediaType").addEventListener("change", function () {
         const mediaType = this.value;
         const seasonInput = document.getElementById("seasonNumber");
         const episodeInput = document.getElementById("episodeNumber");
 
         if (mediaType === "episode") {
-          seasonInput.style.display = "block";
-          episodeInput.style.display = "block";
+            seasonInput.style.display = "block";
+            episodeInput.style.display = "block";
         } else {
-          seasonInput.style.display = "none";
-          episodeInput.style.display = "none";
+            seasonInput.style.display = "none";
+            episodeInput.style.display = "none";
         }
-      });
+    });
 
-      // Function to try multiple CORS proxies
-      async function fetchWithFallback(urls, options = {}) {
-        for (const proxyUrl of CORS_PROXIES) {
-          try {
-            const response = await fetch(proxyUrl + urls[0], options);
-            return await response.text();
-          } catch (error) {
-            console.warn(`Proxy ${proxyUrl} failed:`, error);
-            continue;
-          }
-        }
-        throw new Error('All CORS proxies failed');
-      }
-
-      // Function to search IMDb ID
-      async function searchIMDbId(mediaName) {
+    async function searchIMDbId(mediaName) {
         const searchUrl = `https://www.imdb.com/find?q=${encodeURIComponent(mediaName)}&s=tt`;
-        
         try {
-          const text = await fetchWithFallback([searchUrl]);
-          const imdbIdMatch = text.match(/\/title\/(tt\d+)/);
-          return imdbIdMatch ? imdbIdMatch[1] : null;
+            const response = await fetch(searchUrl);
+            const text = await response.text();
+            const match = text.match(/\/title\/(tt\d+)/);
+            return match ? match[1] : null;
         } catch (error) {
-          console.error("IMDb search failed:", error);
-          return null;
+            console.error("IMDb search failed:", error);
+            return null;
         }
-      }
+    }
 
-      // Main function to embed media
-      async function embedMedia() {
+    async function getValidProxy(embedUrl) {
+        for (const proxy of STREAMING_PROXIES) {
+            const testUrl = `${proxy}${embedUrl}`;
+            try {
+                const response = await fetch(testUrl, { method: 'HEAD' });
+                if (response.ok) return testUrl;
+            } catch (error) {
+                console.warn(`Proxy ${proxy} failed:`, error);
+            }
+        }
+        throw new Error("No working proxies found");
+    }
+
+    async function embedMedia() {
         const mediaType = document.getElementById("mediaType").value;
         const mediaName = document.getElementById("mediaName").value.trim();
         const manualImdbId = document.getElementById("imdbId").value.trim();
@@ -284,81 +214,36 @@
         const iframeContainer = document.getElementById("iframeContainer");
 
         if (!mediaName && !manualImdbId) {
-          alert("Please enter a media name or IMDb ID!");
-          return;
+            alert("Please enter a media name or IMDb ID!");
+            return;
         }
 
-        // Show loading indicator
         loadingIndicator.style.display = "flex";
-        iframeContainer.innerHTML = ""; // Clear previous content
+        iframeContainer.innerHTML = "";
 
         try {
-          // Determine IMDb ID
-          let imdbId = manualImdbId;
-          if (!imdbId) {
-            imdbId = await searchIMDbId(mediaName);
-            if (!imdbId) {
-              alert("Could not find media. Try entering the IMDb ID manually.");
-              loadingIndicator.style.display = "none";
-              return;
-            }
-          }
+            const imdbId = manualImdbId || await searchIMDbId(mediaName);
+            if (!imdbId) throw new Error("Media not found!");
 
-          // Try different streaming proxies
-          let embedUrl = "";
-          let success = false;
-
-          for (const proxy of STREAMING_PROXIES) {
-            if (mediaType === "movie") {
-              embedUrl = `${proxy}/embed/movie/${imdbId}`;
-            } else if (mediaType === "tv") {
-              embedUrl = `${proxy}/embed/tv/${imdbId}`;
-            } else if (mediaType === "episode") {
-              if (!seasonNumber || !episodeNumber) {
-                alert("Please enter both season and episode numbers!");
-                loadingIndicator.style.display = "none";
-                return;
-              }
-              embedUrl = `${proxy}/embed/tv/${imdbId}/${seasonNumber}-${episodeNumber}`;
+            let embedUrl = `/embed/${mediaType}/${imdbId}`;
+            if (mediaType === "episode" && seasonNumber && episodeNumber) {
+                embedUrl = `/embed/tv/${imdbId}/${seasonNumber}-${episodeNumber}`;
             }
 
-            // Test the embed URL
-            try {
-              const testResponse = await fetch(embedUrl);
-              if (testResponse.ok) {
-                success = true;
-                break;
-              }
-            } catch (error) {
-              console.warn(`Proxy ${proxy} failed:`, error);
-              continue;
-            }
-          }
+            const validEmbedUrl = await getValidProxy(embedUrl);
 
-          if (!success) {
-            alert("No working streaming sources found. Try a different media or IMDb ID.");
-            loadingIndicator.style.display = "none";
-            return;
-          }
+            const iframe = document.createElement("iframe");
+            iframe.src = validEmbedUrl;
+            iframe.allowFullscreen = true;
+            iframe.onload = () => loadingIndicator.style.display = "none";
 
-          // Create and embed the iframe
-          const iframe = document.createElement('iframe');
-          iframe.src = embedUrl;
-          iframe.allowFullscreen = true;
-          
-          // Hide loading indicator when iframe loads
-          iframe.onload = () => {
-            loadingIndicator.style.display = "none";
-          };
-
-          iframeContainer.appendChild(iframe);
-
+            iframeContainer.appendChild(iframe);
         } catch (error) {
-          console.error("Error fetching media data:", error);
-          alert("Failed to retrieve media information. Check your input and try again.");
-          loadingIndicator.style.display = "none";
+            console.error("Error:", error);
+            alert("Failed to load media.");
+            loadingIndicator.style.display = "none";
         }
-      }
-    </script>
-  </body>
+    }
+</script>
+</body>
 </html>
