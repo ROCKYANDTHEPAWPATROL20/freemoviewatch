@@ -6,21 +6,24 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body { background-color: #1a202c; color: #e2e8f0; }
-
-        /* Movie Card & Animation */
         .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
         .movie-card { transition: transform 0.3s ease, opacity 0.8s ease; opacity: 0; }
         .movie-card.fade-in { opacity: 1; }
 
-        .fade-out-other { animation: fadeOut 1s forwards; }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        /* Fade-out Animation */
+        .fade-out { animation: fadeOut 0.8s forwards; }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
 
+        /* Zoom Animation */
         .zoom-fade {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            animation: zoomInFadeOut 1.5s ease forwards;
+            animation: zoomInFadeOut 1.2s ease forwards;
             z-index: 50;
         }
         @keyframes zoomInFadeOut {
@@ -29,44 +32,15 @@
             100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
         }
 
-        .fade-in { animation: fadeIn 1.5s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Persistent Popup */
-        .popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 20px 40px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 10px;
-            z-index: 1000;
-            display: none;
-            text-align: center;
-        }
-
-        /* Wi-Fi Animation Placeholder */
-        .wifi-gif {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 20px;
-            background: url('wifi.gif') no-repeat center;
-            background-size: contain;
-            background-color: black;
+        .fade-in { animation: fadeIn 1.2s ease forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
 
 <body class="p-8 bg-gray-900">
-    <div id="popup" class="popup">
-        <div class="wifi-gif"></div>
-        <span id="popupText">Network Connection Lost!</span>
-    </div>
-
     <div class="container mx-auto">
         <h1 class="text-3xl font-bold text-center mb-8 text-white">Movie & TV Show Finder</h1>
 
@@ -77,43 +51,21 @@
 
         <div id="resultsContainer" class="movie-grid"></div>
         <div id="playerContainer" class="mt-8 hidden">
-            <iframe id="mediaPlayer" width="100%" height="600px" class="border-none rounded" allowfullscreen></iframe>
+            <iframe id="mediaPlayer" width="100%" height="600px" class="border-none rounded" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>
         </div>
     </div>
 
     <script>
         const IMDB_API = 'https://www.omdbapi.com/?apikey=9d7e4a8f&s=';
+        const IMDB_DETAILS = 'https://www.omdbapi.com/?apikey=9d7e4a8f&i=';
+
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         const resultsContainer = document.getElementById('resultsContainer');
         const mediaPlayer = document.getElementById('mediaPlayer');
         const playerContainer = document.getElementById('playerContainer');
-        const popup = document.getElementById('popup');
-        const popupText = document.getElementById('popupText');
 
         let currentResults = [];
-
-        // Disable All Inputs When Offline
-        function disableInputs(disable) {
-            document.body.style.pointerEvents = disable ? "none" : "auto";
-            document.body.style.overflow = disable ? "hidden" : "auto";
-        }
-
-        // Detect Network Changes
-        window.addEventListener("offline", () => handleNetworkChange(false));
-        window.addEventListener("online", () => handleNetworkChange(true));
-
-        function handleNetworkChange(connected) {
-            popupText.textContent = connected ? "Network Connection Restored!" : "Network Connection Lost!";
-            popup.style.display = "block";
-
-            if (connected) {
-                setTimeout(() => { popup.style.display = "none"; }, 3000);
-                disableInputs(false);
-            } else {
-                disableInputs(true);
-            }
-        }
 
         async function searchMedia() {
             const query = searchInput.value.trim();
@@ -123,7 +75,7 @@
                 const response = await axios.get(`${IMDB_API}${encodeURIComponent(query)}`);
                 currentResults = response.data.Search || [];
 
-                mediaPlayer.src = "";  // Reset media player
+                mediaPlayer.src = "";  // Reset mediaPlayer
                 playerContainer.classList.add("hidden");
                 resultsContainer.classList.remove("hidden");
 
@@ -134,8 +86,9 @@
             }
         }
 
-        function displayResults(results) {
+        async function displayResults(results) {
             resultsContainer.innerHTML = '';
+
             results.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'movie-card cursor-pointer bg-gray-800 rounded overflow-hidden shadow-lg fade-in';
@@ -146,6 +99,7 @@
                         <p>${item.Year}</p>
                     </div>
                 `;
+
                 card.addEventListener('click', () => playMedia(item.imdbID, card));
                 resultsContainer.appendChild(card);
             });
@@ -154,19 +108,23 @@
         function playMedia(imdbID, selectedCard) {
             const streamUrl = `https://vidsrc.xyz/embed/movie/${imdbID}`;
 
+            // Fade out other cards
             Array.from(resultsContainer.children).forEach(card => {
-                if (card !== selectedCard) card.classList.add('fade-out-other');
+                if (card !== selectedCard) card.classList.add('fade-out');
             });
 
+            // Apply zoom-fade effect on the selected card
             selectedCard.classList.add('zoom-fade');
 
+            // After the animation, switch to the media player
             setTimeout(() => {
                 resultsContainer.classList.add('hidden');
+                selectedCard.remove();  // Prevent stuck UI
                 playerContainer.classList.remove('hidden');
                 mediaPlayer.src = streamUrl;
                 mediaPlayer.classList.add('fade-in');
                 playerContainer.scrollIntoView({ behavior: 'smooth' });
-            }, 1500);
+            }, 1200);
         }
 
         searchBtn.addEventListener('click', searchMedia);
