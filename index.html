@@ -1,47 +1,61 @@
-<html><head><base href="/">
-<title>Movie Search & Stream</title>
-<meta charset="UTF-8">
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<style>
-    body { background-color: #1a202c; color: #e2e8f0; }
-    .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-    .movie-card { transition: transform 0.3s ease; }
-    .movie-card:hover { transform: scale(1.05); }
-    .slider-container { display: flex; align-items: center; margin-bottom: 20px; }
-    .slider-container label { margin-right: 10px; color: white; }
-</style>
+<html>
+<head>
+    <title>Movie Search & Stream</title>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { background-color: #1a202c; color: #e2e8f0; }
+        .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .movie-card { transition: transform 0.3s ease, opacity 0.8s ease; opacity: 0; }
+        .movie-card.fade-in { opacity: 1; }
+
+        /* Fade-out Animation */
+        .fade-out { animation: fadeOut 0.8s forwards; }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Zoom Animation */
+        .zoom-fade {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: zoomInFadeOut 1.2s ease forwards;
+            z-index: 50;
+        }
+        @keyframes zoomInFadeOut {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(6); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
+        }
+
+        .fade-in { animation: fadeIn 1.2s ease forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
+
 <body class="p-8 bg-gray-900">
     <div class="container mx-auto">
         <h1 class="text-3xl font-bold text-center mb-8 text-white">Movie & TV Show Finder</h1>
-        
-        <div class="flex mb-8">
-            <input type="text" id="searchInput" 
-                class="flex-grow p-2 rounded bg-gray-700 text-white" 
-                placeholder="Enter movie or TV show name">
-            <button id="searchBtn" 
-                class="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Search
-            </button>
-        </div>
 
-        <div class="slider-container">
-            <label for="resultsSlider">Results per Page:</label>
-            <input type="range" id="resultsSlider" min="1" max="20" value="10" 
-                   class="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-            <span id="sliderValue" class="ml-4 text-white">10</span>
+        <div class="flex mb-8">
+            <input type="text" id="searchInput" class="flex-grow p-2 rounded bg-gray-700 text-white" placeholder="Enter movie or TV show name">
+            <button id="searchBtn" class="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Search</button>
         </div>
 
         <div id="resultsContainer" class="movie-grid"></div>
-        <div id="playerContainer" class="mt-8">
-            <iframe id="mediaPlayer" width="100%" height="600px" 
-                    class="hidden border-none rounded"></iframe>
+        <div id="playerContainer" class="mt-8 hidden">
+            <iframe id="mediaPlayer" width="100%" height="600px" class="border-none rounded"></iframe>
         </div>
     </div>
 
     <script>
-        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
         const IMDB_API = 'https://www.omdbapi.com/?apikey=9d7e4a8f&s=';
         const IMDB_DETAILS = 'https://www.omdbapi.com/?apikey=9d7e4a8f&i=';
 
@@ -49,23 +63,22 @@
         const searchBtn = document.getElementById('searchBtn');
         const resultsContainer = document.getElementById('resultsContainer');
         const mediaPlayer = document.getElementById('mediaPlayer');
-        const resultsSlider = document.getElementById('resultsSlider');
-        const sliderValue = document.getElementById('sliderValue');
         const playerContainer = document.getElementById('playerContainer');
 
         let currentResults = [];
 
-        // Update slider value display
-        resultsSlider.addEventListener('input', function() {
-            sliderValue.textContent = this.value;
-            displayResults(currentResults);
-        });
-
         async function searchMedia() {
-            const query = searchInput.value;
+            const query = searchInput.value.trim();
+            if (!query) return;
+
             try {
                 const response = await axios.get(`${IMDB_API}${encodeURIComponent(query)}`);
                 currentResults = response.data.Search || [];
+
+                mediaPlayer.src = "";  // Reset mediaPlayer
+                playerContainer.classList.add("hidden");
+                resultsContainer.classList.remove("hidden");
+
                 displayResults(currentResults);
             } catch (error) {
                 console.error("Search error:", error);
@@ -75,46 +88,43 @@
 
         async function displayResults(results) {
             resultsContainer.innerHTML = '';
-            const displayCount = parseInt(resultsSlider.value);
-            
-            for (let i = 0; i < Math.min(results.length, displayCount); i++) {
-                const item = results[i];
-                try {
-                    const detailResponse = await axios.get(`${IMDB_DETAILS}${item.imdbID}`);
-                    const details = detailResponse.data;
 
-                    const card = document.createElement('div');
-                    card.className = 'movie-card cursor-pointer bg-gray-800 rounded overflow-hidden shadow-lg';
-                    card.innerHTML = `
-                        <img src="${item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450'}" 
-                             class="w-full h-96 object-cover">
-                        <div class="p-4">
-                            <h3 class="text-lg font-bold">${item.Title}</h3>
-                            <p>${item.Year} • ${details.Type}</p>
-                        </div>
-                    `;
+            results.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'movie-card cursor-pointer bg-gray-800 rounded overflow-hidden shadow-lg fade-in';
+                card.innerHTML = `
+                    <img src="${item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450'}" class="w-full h-96 object-cover">
+                    <div class="p-4">
+                        <h3 class="movie-title text-lg font-bold">${item.Title}</h3>
+                        <p>${item.Year}</p>
+                    </div>
+                `;
 
-                    card.addEventListener('click', () => playMedia(item.imdbID, details.Type));
-                    resultsContainer.appendChild(card);
-                } catch (error) {
-                    console.error("Detail fetch error:", error);
-                }
-            }
+                card.addEventListener('click', () => playMedia(item.imdbID, card));
+                resultsContainer.appendChild(card);
+            });
         }
 
-        function playMedia(imdbID, type) {
-            let streamUrl;
-            if (type === 'movie') {
-                streamUrl = `https://vidsrc.xyz/embed/movie/${imdbID}`;
-            } else if (type === 'series') {
-                streamUrl = `https://vidsrc.xyz/embed/tv/${imdbID}`;
-            }
+        function playMedia(imdbID, selectedCard) {
+            const streamUrl = `https://vidsrc.xyz/embed/movie/${imdbID}`;
 
-            mediaPlayer.src = streamUrl;
-            mediaPlayer.classList.remove('hidden');
+            // Fade out other cards
+            Array.from(resultsContainer.children).forEach(card => {
+                if (card !== selectedCard) card.classList.add('fade-out');
+            });
 
-            // Scroll to the player
-            playerContainer.scrollIntoView({ behavior: 'smooth' });
+            // Apply zoom-fade effect on the selected card
+            selectedCard.classList.add('zoom-fade');
+
+            // After the animation, switch to the media player
+            setTimeout(() => {
+                resultsContainer.classList.add('hidden');
+                selectedCard.remove();  // Prevent stuck UI
+                playerContainer.classList.remove('hidden');
+                mediaPlayer.src = streamUrl;
+                mediaPlayer.classList.add('fade-in');
+                playerContainer.scrollIntoView({ behavior: 'smooth' });
+            }, 1200);
         }
 
         searchBtn.addEventListener('click', searchMedia);
