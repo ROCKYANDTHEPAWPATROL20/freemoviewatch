@@ -1,136 +1,159 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Movie Search & Stream</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search & Stream</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <style>
-        body { background-color: #1a202c; color: #e2e8f0; }
-        .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .movie-card { transition: transform 0.3s ease, opacity 0.8s ease; opacity: 0; }
-        .movie-card.fade-in { opacity: 1; }
-
-        /* Fade-out Animation */
-        .fade-out { animation: fadeOut 0.8s forwards; }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-
-        /* Zoom Animation */
-        .zoom-fade {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: zoomInFadeOut 1.2s ease forwards;
-            z-index: 50;
-        }
-        @keyframes zoomInFadeOut {
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            80% { transform: translate(-50%, -50%) scale(6); opacity: 0.8; }
-            100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
-        }
-
-        .fade-in { animation: fadeIn 1.2s ease forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
 </head>
 
-<body class="p-8 bg-gray-900">
+<body class="bg-gray-900 text-gray-100 min-h-screen p-8">
     <div class="container mx-auto">
-        <h1 class="text-3xl font-bold text-center mb-8 text-white">Movie & TV Show Finder</h1>
+        <h1 class="text-4xl font-bold text-center mb-8">🎥 Movie & TV Show Finder</h1>
 
-        <div class="flex mb-8">
-            <input type="text" id="searchInput" class="flex-grow p-2 rounded bg-gray-700 text-white" placeholder="Enter movie or TV show name">
-            <button id="searchBtn" class="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Search</button>
+        <!-- Search Bar -->
+        <div class="flex items-center mb-8">
+            <input type="text" id="searchInput" class="flex-grow p-4 rounded-lg bg-gray-700 text-white" placeholder="Enter movie, TV show, or episode name">
+            <button id="searchBtn" class="ml-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Search</button>
         </div>
 
-        <div id="resultsContainer" class="movie-grid"></div>
-        <div id="playerContainer" class="mt-8 hidden">
-            <iframe id="mediaPlayer" width="100%" height="600px" class="border-none rounded" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>
+        <!-- Loader -->
+        <div id="loader" class="hidden text-center text-2xl mb-8">🔄 Searching...</div>
+
+        <!-- Results -->
+        <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+
+        <!-- Media Player -->
+        <div id="playerContainer" class="hidden mt-12">
+            <iframe id="mediaPlayer" width="100%" height="600px" class="rounded-lg" allowfullscreen></iframe>
+        </div>
+
+        <!-- Movie Details Modal -->
+        <div id="movieModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+            <div class="bg-gray-800 p-8 rounded-lg text-white w-11/12 md:w-3/4 lg:w-1/2 max-w-4xl relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-2xl font-bold">&times;</button>
+                <div id="movieDetails" class="flex flex-col md:flex-row items-start space-x-0 md:space-x-8 space-y-4 md:space-y-0"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        const IMDB_API = 'https://www.omdbapi.com/?apikey=9d7e4a8f&s=';
-        const IMDB_DETAILS = 'https://www.omdbapi.com/?apikey=9d7e4a8f&i=';
+        const API_KEY = '9d7e4a8f';
+        const OMDB_SEARCH_API = `https://www.omdbapi.com/?apikey=${API_KEY}&s=`;
+        const OMDB_DETAILS_API = `https://www.omdbapi.com/?apikey=${API_KEY}&i=`;
 
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         const resultsContainer = document.getElementById('resultsContainer');
+        const loader = document.getElementById('loader');
         const mediaPlayer = document.getElementById('mediaPlayer');
         const playerContainer = document.getElementById('playerContainer');
-
-        let currentResults = [];
-
-        async function searchMedia() {
-            const query = searchInput.value.trim();
-            if (!query) return;
-
-            try {
-                const response = await axios.get(`${IMDB_API}${encodeURIComponent(query)}`);
-                currentResults = response.data.Search || [];
-
-                mediaPlayer.src = "";  // Reset mediaPlayer
-                playerContainer.classList.add("hidden");
-                resultsContainer.classList.remove("hidden");
-
-                displayResults(currentResults);
-            } catch (error) {
-                console.error("Search error:", error);
-                resultsContainer.innerHTML = '<p class="text-red-500">Error searching media</p>';
-            }
-        }
-
-        async function displayResults(results) {
-            resultsContainer.innerHTML = '';
-
-            results.forEach((item) => {
-                const card = document.createElement('div');
-                card.className = 'movie-card cursor-pointer bg-gray-800 rounded overflow-hidden shadow-lg fade-in';
-                card.innerHTML = `
-                    <img src="${item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450'}" class="w-full h-96 object-cover">
-                    <div class="p-4">
-                        <h3 class="movie-title text-lg font-bold">${item.Title}</h3>
-                        <p>${item.Year}</p>
-                    </div>
-                `;
-
-                card.addEventListener('click', () => playMedia(item.imdbID, card));
-                resultsContainer.appendChild(card);
-            });
-        }
-
-        function playMedia(imdbID, selectedCard) {
-            const streamUrl = `https://vidsrc.xyz/embed/movie/${imdbID}`;
-
-            // Fade out other cards
-            Array.from(resultsContainer.children).forEach(card => {
-                if (card !== selectedCard) card.classList.add('fade-out');
-            });
-
-            // Apply zoom-fade effect on the selected card
-            selectedCard.classList.add('zoom-fade');
-
-            // After the animation, switch to the media player
-            setTimeout(() => {
-                resultsContainer.classList.add('hidden');
-                selectedCard.remove();  // Prevent stuck UI
-                playerContainer.classList.remove('hidden');
-                mediaPlayer.src = streamUrl;
-                mediaPlayer.classList.add('fade-in');
-                playerContainer.scrollIntoView({ behavior: 'smooth' });
-            }, 1200);
-        }
+        const movieModal = document.getElementById('movieModal');
+        const movieDetails = document.getElementById('movieDetails');
 
         searchBtn.addEventListener('click', searchMedia);
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchMedia();
         });
+
+        async function searchMedia() {
+            const query = searchInput.value.trim();
+            if (!query) return alert('Please enter a search term.');
+
+            resetView();
+            showLoader(true);
+
+            try {
+                const response = await axios.get(`${OMDB_SEARCH_API}${encodeURIComponent(query)}`);
+                const results = response.data.Search || [];
+                displayResults(results);
+            } catch (error) {
+                alert('Error fetching search results.');
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function displayResults(results) {
+            resultsContainer.innerHTML = results.map(movieCardTemplate).join('');
+        }
+
+        function movieCardTemplate(movie) {
+            const poster = movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450';
+            return `
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg hover:shadow-2xl">
+                    <img src="${poster}" alt="${movie.Title}" class="w-full object-contain rounded-lg mb-4">
+                    <div class="bg-blue-900 p-4 rounded-lg text-white">
+                        <h3 onclick="playMedia('${movie.imdbID}', '${movie.Type}')" 
+                            class="text-lg font-bold cursor-pointer text-blue-300 hover:text-blue-200">
+                            ${movie.Title}
+                        </h3>
+                        <button onclick="viewDetails('${movie.imdbID}')" 
+                            class="mt-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700">
+                            Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function viewDetails(imdbID) {
+            try {
+                const response = await axios.get(`${OMDB_DETAILS_API}${imdbID}`);
+                const movie = response.data;
+
+                movieDetails.innerHTML = `
+                    <img src="${movie.Poster}" alt="${movie.Title}" 
+                        class="max-w-sm w-full md:w-1/3 rounded-lg object-contain">
+                    <div class="space-y-4">
+                        <h2 class="text-3xl font-bold">${movie.Title} (${movie.Year})</h2>
+                        <p class="text-lg">${movie.Genre} | ${movie.Runtime}</p>
+                        <p>${movie.Plot}</p>
+                        <p><strong>Actors:</strong> ${movie.Actors}</p>
+                        <p><strong>Director:</strong> ${movie.Director}</p>
+                        <p><strong>IMDB Rating:</strong> ${movie.imdbRating}</p>
+                    </div>
+                `;
+                openModal();
+            } catch (error) {
+                alert('Error loading movie details.');
+            }
+        }
+
+        function playMedia(imdbID, type) {
+            let mediaUrl;
+            if (type === 'movie') {
+                mediaUrl = `https://vidsrc.xyz/embed/movie/${imdbID}`;
+            } else if (type === 'series' || type === 'tv') {
+                mediaUrl = `https://vidsrc.xyz/embed/tv/${imdbID}`;
+            } else {
+                const season = prompt('Enter the season number:', '1');
+                const episode = prompt('Enter the episode number:', '1');
+                mediaUrl = `https://vidsrc.xyz/embed/tv/${imdbID}/${season}-${episode}`;
+            }
+            mediaPlayer.src = mediaUrl;
+            resultsContainer.classList.add('hidden');
+            playerContainer.classList.remove('hidden');
+        }
+
+        function showLoader(visible) {
+            loader.classList.toggle('hidden', !visible);
+        }
+
+        function resetView() {
+            resultsContainer.classList.remove('hidden');
+            playerContainer.classList.add('hidden');
+            mediaPlayer.src = '';
+        }
+
+        function openModal() {
+            movieModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            movieModal.classList.add('hidden');
+        }
     </script>
 </body>
 </html>
