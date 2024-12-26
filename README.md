@@ -1,139 +1,36 @@
+# Cinema Finder 🎬
 
-## Introduction
+**Cinema Finder** is a modern, user-friendly web application that allows you to search for movies and TV shows, view their details, and stream them directly in your browser. It uses the OMDB API to fetch movie data and integrates with a streaming service to play media.
 
-**HD Media Explorer** is a responsive web application designed to provide a seamless way to search and watch high-definition movies, TV shows, and episodes. By leveraging the IMDb search and embedding content from trusted streaming services, this tool allows users to easily discover and play their favorite media.
+## Features ✨
 
-The user interface features a gradient-rich, animated background with a modern and accessible design. It dynamically adjusts inputs based on the type of media being searched, ensuring a straightforward and user-friendly experience.
+- **Search Movies/TV Shows**: Search for movies or TV shows by name.
+- **View Details**: Get detailed information about a movie or TV show, including plot, actors, director, and IMDb rating.
+- **Stream Media**: Play movies or TV shows directly in the browser.
+- **Fullscreen Mode**: Watch media in fullscreen for a better viewing experience.
+- **Responsive Design**: Works seamlessly on mobile, tablet, and desktop.
+- **Smooth Animations**: Enjoy smooth animations for a modern and engaging user experience.
 
----
+## Technologies Used 🛠️
 
-## Features
+- **HTML**: Structure of the web page.
+- **Tailwind CSS**: Styling and responsive design.
+- **JavaScript**: Dynamic functionality and API integration.
+- **OMDB API**: Fetch movie and TV show data.
+- **Vidsrc**: Stream movies and TV shows.
 
-1. **Dynamic Media Type Selection:**
-   - Choose between **Movies**, **TV Shows**, or **Episodes**.
-   - Inputs for season and episode numbers are displayed only when relevant.
+## How to Use 🚀
 
-2. **Media Search:**
-   - Utilizes IMDb's search capabilities to identify media by name.
+### 1. Search for a Movie or TV Show
+- Enter the name of a movie or TV show in the search bar.
+- Click the **Search** button or press **Enter**.
 
-3. **HD Media Embedding:**
-   - Embeds content using the `vidsrc.xyz` streaming service.
-   - Automatically constructs URLs for movies, TV shows, and specific episodes.
+### 2. View Movie Details
+- Click the **Details** button on any movie card to view more information about the movie or TV show.
 
-4. **Responsive Design:**
-   - Fully responsive layout with support for mobile, tablet, and desktop views.
+### 3. Play Media
+- Click the movie title to start streaming the movie or TV show.
+- Use the **Go Fullscreen** button to watch in fullscreen mode.
 
-5. **Animated UI Enhancements:**
-   - Gradient backgrounds with smooth animations.
-   - Loading spinner for a polished user experience.
-
----
-
-## How to Use
-
-### 1. Prerequisites
-Ensure you have:
-- A modern web browser (e.g., Chrome, Firefox, Edge).
-- Access to the internet.
-- Optionally, ensure the [CORS Anywhere proxy](https://cors-anywhere.herokuapp.com/) is active. If it is inactive, you can set up your own proxy instance or modify the fetch requests.
-
----
-
-### 2. Launching the App
-1. Open [Free HD Media Search](https://rockyandthepawpatrol20.github.io/freemoviewatch.github.io/)
----
-
-### 3. Searching for Media
-1. **Select Media Type:**
-   - From the dropdown menu, choose between:
-     - **Movie**
-     - **TV Show**
-     - **Episode** (requires season and episode numbers).
-   
-2. **Enter Media Name:**
-   - Type the name of the media you want to find.
-
-3. **For Episodes:**
-   - Provide the season number and episode number.
-
-4. **Click `Search & Watch`:**
-   - A loading spinner will appear while the system retrieves data.
-
----
-
-### 4. Watching Media
-- After a few moments, the content will embed directly in the application.
-- The player is fully interactive and supports fullscreen playback.
-
----
-
-## Code Walkthrough
-
-### 1. **HTML Structure**
-- A simple layout with:
-  - **Search Controls:** Dropdown, text inputs, and a button for triggering searches.
-  - **Loading Indicator:** A spinner animation displayed while fetching data.
-  - **Iframe Container:** Displays the embedded media player.
-
-### 2. **CSS Styling**
-- **Modern Design:**
-  - Gradient animations for backgrounds.
-  - Smooth transitions for hover effects and focus styles.
-- **Responsiveness:**
-  - Adjusts styles for smaller screens using media queries.
-
-### 3. **JavaScript Logic**
-- **Event Handlers:**
-  - Dynamically shows/hides season and episode inputs based on the media type.
-- **Fetching Media:**
-  - Uses IMDb search results to extract the unique `IMDb ID`.
-  - Constructs appropriate URLs for embedding.
-- **Error Handling:**
-  - Alerts users if a media item cannot be found or if inputs are invalid.
-- **Dynamic Embedding:**
-  - Creates an iframe with the constructed URL and embeds it in the container.
-
----
-
-## Important Notes
-1. **Proxy Setup:**
-   - The script uses the [CORS Anywhere](https://cors-anywhere.herokuapp.com/) proxy to bypass cross-origin restrictions. If the public instance is unavailable, consider hosting your own instance.
-
-2. **Embedding Restrictions:**
-   - Ensure compliance with content licensing and regional restrictions when using the embedded player.
-
-3. **Third-Party Dependencies:**
-   - This project relies on IMDb and `vidsrc.xyz`. Service availability may affect functionality.
-
----
-
-## Browser Compatibility
-| Browser         | Compatibility |
-|------------------|---------------|
-| Google Chrome    | ✅ Full Support |
-| Mozilla Firefox  | ✅ Full Support |
-| Microsoft Edge   | ✅ Full Support |
-| Safari           | ✅ Full Support |
-
----
-
-## Potential Enhancements
-- Add support for custom media players.
-- Integrate user authentication and media bookmarks.
-- Provide fallback options for unavailable media.
-
----
-
-## Troubleshooting
-1. **Media Not Found:**
-   - Double-check the media name for typos.
-   - Verify if IMDb contains the requested content.
-
-2. **Loading Indicator Stuck:**
-   - Refresh the page and try again.
-   - Check network connectivity.
-
-3. **Embed Not Loading:**
-   - Ensure `vidsrc.xyz` is operational.
-
----
+### 4. Scroll to Top
+- Use the floating action button (FAB) in the bottom-right corner to quickly scroll back to the top of the page.
