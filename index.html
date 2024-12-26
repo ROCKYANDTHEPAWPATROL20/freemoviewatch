@@ -102,6 +102,7 @@
         <!-- Media Player -->
         <div id="playerContainer" class="hidden mt-12 scale-up">
             <iframe id="mediaPlayer" width="100%" height="600px" class="rounded-lg shadow-lg" allowfullscreen></iframe>
+            <button id="fullscreenBtn" class="mt-4 px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-transform transform clickable shadow-md">Go Fullscreen</button>
         </div>
 
         <!-- Movie Details Modal -->
@@ -129,12 +130,26 @@
         const loader = document.getElementById('loader');
         const mediaPlayer = document.getElementById('mediaPlayer');
         const playerContainer = document.getElementById('playerContainer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
         const movieModal = document.getElementById('movieModal');
         const movieDetails = document.getElementById('movieDetails');
 
         searchBtn.addEventListener('click', searchMedia);
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchMedia();
+        });
+
+        // Fullscreen button functionality
+        fullscreenBtn.addEventListener('click', () => {
+            if (mediaPlayer.requestFullscreen) {
+                mediaPlayer.requestFullscreen();
+            } else if (mediaPlayer.mozRequestFullScreen) { // Firefox
+                mediaPlayer.mozRequestFullScreen();
+            } else if (mediaPlayer.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                mediaPlayer.webkitRequestFullscreen();
+            } else if (mediaPlayer.msRequestFullscreen) { // IE/Edge
+                mediaPlayer.msRequestFullscreen();
+            }
         });
 
         async function searchMedia() {
