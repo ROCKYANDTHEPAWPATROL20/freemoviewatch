@@ -3,41 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Search & Stream</title>
+    <title>Cinema Finder</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-</head>    
+    <style>
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
+        @keyframes scaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes stagger {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .scale-up {
+            animation: scaleUp 0.3s ease-out;
+        }
+
+        .staggered-animation {
+            animation: stagger 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        /* Hover Effects */
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .movie-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .clickable:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        .clickable {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #3B82F6;
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-8">
     <div class="container mx-auto">
-        <h1 class="text-4xl font-bold text-center mb-8">🎥 Movie & TV Show Finder</h1>
+        <!-- Header -->
+        <header class="text-center mb-12 fade-in">
+            <h1 class="text-4xl font-bold text-blue-400 mb-4">🎬 Cinema Finder</h1>
+            <p class="text-gray-400">Discover and stream your favorite movies and TV shows</p>
+        </header>
 
         <!-- Search Bar -->
-        <div class="flex items-center mb-8">
-            <input type="text" id="searchInput" class="flex-grow p-4 rounded-lg bg-gray-700 text-white" placeholder="Enter movie, TV show, or episode name">
-            <button id="searchBtn" class="ml-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Search</button>
+        <div class="flex items-center justify-center mb-12 fade-in">
+            <input type="text" id="searchInput" class="flex-grow p-4 rounded-lg bg-gray-800 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" placeholder="Search for a movie or TV show">
+            <button id="searchBtn" class="ml-4 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-transform transform clickable shadow-md">Search</button>
         </div>
 
         <!-- Loader -->
-        <div id="loader" class="hidden text-center text-2xl mb-8">🔄 Searching...</div>
+        <div id="loader" class="hidden text-center text-2xl mb-8 animate-pulse">🔍 Searching...</div>
 
-        <!-- Results -->
-        <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        <!-- Results Grid -->
+        <div id="resultsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"></div>
 
         <!-- Media Player -->
-        <div id="playerContainer" class="hidden mt-12">
-            <iframe id="mediaPlayer" width="100%" height="600px" class="rounded-lg" allowfullscreen></iframe>
+        <div id="playerContainer" class="hidden mt-12 scale-up">
+            <iframe id="mediaPlayer" width="100%" height="600px" class="rounded-lg shadow-lg" allowfullscreen></iframe>
         </div>
 
         <!-- Movie Details Modal -->
-        <div id="movieModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center">
-            <div class="bg-gray-800 p-8 rounded-lg text-white w-11/12 md:w-3/4 lg:w-1/2 max-w-4xl relative">
-                <button onclick="closeModal()" class="absolute top-4 right-4 text-2xl font-bold">&times;</button>
-                <div id="movieDetails" class="flex flex-col md:flex-row items-start space-x-0 md:space-x-8 space-y-4 md:space-y-0"></div>
+        <div id="movieModal" class="hidden fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-75">
+            <div class="bg-gray-800 rounded-lg text-gray-100 w-11/12 md:w-3/4 lg:w-1/2 max-w-4xl relative p-8 scale-up">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-3xl font-bold hover:text-blue-500 transition clickable">&times;</button>
+                <div id="movieDetails" class="flex flex-col md:flex-row items-start space-y-6 md:space-y-0 md:space-x-8">
+                    <!-- Movie details will be dynamically inserted here -->
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab clickable" onclick="scrollToTop()">↑</button>
 
     <script>
         const API_KEY = '9d7e4a8f';
@@ -78,22 +157,22 @@
 
         function displayResults(results) {
             resultsContainer.innerHTML = results.map(movieCardTemplate).join('');
+            // Add staggered animation to each movie card
+            const cards = document.querySelectorAll('.movie-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('staggered-animation');
+            });
         }
 
         function movieCardTemplate(movie) {
             const poster = movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450';
             return `
-                <div class="bg-gray-800 p-4 rounded-lg shadow-lg hover:shadow-2xl">
-                    <img src="${poster}" alt="${movie.Title}" class="w-full object-contain rounded-lg mb-4">
-                    <div class="bg-blue-900 p-4 rounded-lg text-white">
-                        <h3 onclick="playMedia('${movie.imdbID}', '${movie.Type}')" 
-                            class="text-lg font-bold cursor-pointer text-blue-300 hover:text-blue-200">
-                            ${movie.Title}
-                        </h3>
-                        <button onclick="viewDetails('${movie.imdbID}')" 
-                            class="mt-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700">
-                            Details
-                        </button>
+                <div class="movie-card bg-gray-800 p-4 rounded-lg shadow-lg hover:shadow-2xl transition-transform transform">
+                    <img src="${poster}" alt="${movie.Title}" class="w-full h-64 object-cover rounded-lg mb-4">
+                    <div class="p-4">
+                        <h3 onclick="playMedia('${movie.imdbID}', '${movie.Type}')" class="text-xl font-bold cursor-pointer text-blue-400 hover:text-blue-300 transition clickable">${movie.Title}</h3>
+                        <button onclick="viewDetails('${movie.imdbID}')" class="mt-2 px-4 py-2 bg-blue-500 rounded-lg text-white hover:bg-blue-600 transition clickable">Details</button>
                     </div>
                 </div>
             `;
@@ -105,8 +184,7 @@
                 const movie = response.data;
 
                 movieDetails.innerHTML = `
-                    <img src="${movie.Poster}" alt="${movie.Title}" 
-                        class="max-w-sm w-full md:w-1/3 rounded-lg object-contain">
+                    <img src="${movie.Poster}" alt="${movie.Title}" class="max-w-sm w-full md:w-1/3 rounded-lg object-contain">
                     <div class="space-y-4">
                         <h2 class="text-3xl font-bold">${movie.Title} (${movie.Year})</h2>
                         <p class="text-lg">${movie.Genre} | ${movie.Runtime}</p>
@@ -154,6 +232,10 @@
 
         function closeModal() {
             movieModal.classList.add('hidden');
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
